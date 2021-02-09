@@ -4,7 +4,6 @@ hi how are you!!!
 
 for portal team java needs
 
+#### packer
 
-
-
-hi i'm fine!!!!
+added new directory for packer ami baking....
