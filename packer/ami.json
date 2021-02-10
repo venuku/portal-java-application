@@ -1,0 +1,91 @@
+{
+  "variables": {
+    "aws_access_key": "",
+    "aws_secret_key": "",
+    "source_ami": "source_ami_id",   
+    "date_stamp": "",
+    "name": "venu_testing_",
+    "launchPermissions": "account_id",
+    "launchPermissions": "account_id",
+    "region":"us-west-2"
+  },
+  "builders": [{
+    "type": "amazon-ebs",
+    "ami_block_device_mappings": [
+        {
+          "device_name": "/dev/sda1",
+          "volume_type": "gp2",
+          "volume_size": "20",
+          "delete_on_termination": true
+        }
+      ],
+    "ssh_pty" : true,
+    "access_key": "{{user `aws_access_key`}}",
+    "secret_key": "{{user `aws_secret_key`}}",
+    "vpc_id": "specify user vpc id",
+    "subnet_id": "specify private subnet group",
+    "region": "us-west-2",
+    "iam_instance_profile": "specify aws role",
+    "source_ami": "{{user `source_ami`}}",
+    "instance_type": "t2.small",
+    "security_group_id": "security group",
+    "ami_name": "{{user `name`}}_{{user `date_stamp`}}",
+    "ami_users"     : [ "{{user `launchPermissions`}}" ],
+    "ami_regions" : "us-west-2",
+    "ami_regions" : "us-west-2",
+    "ssh_username": "centos",
+    "run_tags": {
+        "ChargeCode": "tags",
+        "Product": "tags",
+        "Role": "Packer" 
+     }
+   }],
+  "provisioners" : [
+    { "type": "shell",
+      "scripts": [
+       "scripts/user_script_name.sh"
+]
+    },
+    { "type": "shell",
+      "inline": [
+        "sudo yum upgrade kernel"#(optional)
+    ]
+   },
+    {
+      "type": "shell",
+      "scripts": [
+        "scripts/reboot.sh"],
+       "expect_disconnect": true 
+   },
+    { "type": "file",
+      "source": "scripts",
+      "destination": "/tmp/scripts"
+    },
+    { "type": "file",
+      "source": "trusted_certs",
+      "destination": "/tmp/trusted_certs"
+    },
+    
+    { "type": "shell",
+      "inline": [
+        "sudo /bin/mkdir -p /tmp/packer/inspec && sudo chown -R centos:centos /tmp/packer/inspec"  
+      ]
+    },
+    {
+      "type": "file",
+      "source": "inspec/spec/ami_validation_spec.rb",
+      "destination": "/tmp/packer/inspec/ami_validation_spec.rb"
+    },
+    {
+      "type": "shell",
+      "script": "scripts/inspec.sh"
+    },
+    {
+      "type": "shell",
+      "inline": [
+        "sudo rm -rf /tmp/packer",
+        "sudo rm -rf /usr/bin/inspec"
+       ]
+    },
+    ]
+}
